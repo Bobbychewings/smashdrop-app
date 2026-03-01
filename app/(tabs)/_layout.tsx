@@ -1,35 +1,45 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect } from 'react';
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+// 1. Import the specific font weights we used in our UI
+import {
+  Rajdhani_500Medium,
+  Rajdhani_600SemiBold,
+  Rajdhani_700Bold,
+  useFonts
+} from '@expo-google-fonts/rajdhani';
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+// Prevent the app from flashing blank while the font is downloading
+SplashScreen.preventAutoHideAsync();
+
+export default function RootLayout() {
+  // 2. Load the fonts into memory
+  const [loaded, error] = useFonts({
+    Rajdhani_500Medium,
+    Rajdhani_600SemiBold,
+    Rajdhani_700Bold,
+  });
+
+  // 3. Hide the splash screen once the fonts are ready
+  useEffect(() => {
+    if (loaded || error) {
+      SplashScreen.hideAsync();
+    }
+  }, [loaded, error]);
+
+  // 4. The Safety Lock: Do not render anything until fonts are loaded!
+  if (!loaded && !error) {
+    return null; 
+  }
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
-    </Tabs>
+    // We use headerShown: false so the default ugly top headers don't ruin our sleek dark mode UI!
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="host" />
+      <Stack.Screen name="settings" />
+      <Stack.Screen name="game/[id]" />
+    </Stack>
   );
 }
