@@ -12,6 +12,7 @@ import * as Notifications from 'expo-notifications';
 
 // Make sure you import storage from your config!
 import { auth, db, storage } from '@/config/firebase';
+import CreditsExplainer from '@/components/CreditsExplainer';
 
 // Tell notifications how to behave when the app is open
 Notifications.setNotificationHandler({
@@ -239,6 +240,9 @@ export default function SettingsScreen() {
           <Switch value={pushEnabled} onValueChange={handleTogglePush} trackColor={{ true: '#34C759' }} />
         </View>
       </View>
+
+      {/* --- NEW: THE CREDITS EXPLAINER --- */}
+      <CreditsExplainer />
 
       <View style={styles.sectionCard}>
         <Text style={styles.sectionTitle}>Security</Text>

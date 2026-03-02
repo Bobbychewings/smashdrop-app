@@ -1,12 +1,15 @@
+import { SKILL_LEVELS } from '@/constants/game';
 import { auth, db } from '@/config/firebase';
 import { SG_COURTS } from '@/utils/locations';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Stack, useRouter } from 'expo-router'; // Stack imported for the Header fix!
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router'; // Stack and useLocalSearchParams imported!
+import { onAuthStateChanged } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { useState } from 'react';
-import { Platform, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Platform, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
 
-const SKILL_LEVELS = ['LB', 'MB', 'HB', 'LI', 'MI', 'HI'];
+// THE MASTER SWITCH: Change to true when you are ready to monetize!
+const ENABLE_CREDITS = false;
 
 // Generates hourly slots for Web
 const WEB_TIME_SLOTS = Array.from({ length: 24 }).map((_, i) => {
@@ -25,7 +28,9 @@ const getRoundedDate = () => {
 
 export default function HostScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams(); // NEW: For receiving form state back
 
+  const [user, setUser] = useState(null);
   const [locationQuery, setLocationQuery] = useState('');
   const [selectedCourtData, setSelectedCourtData] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -51,6 +56,45 @@ export default function HostScreen() {
   const [price, setPrice] = useState('');
   const [isHostPlaying, setIsHostPlaying] = useState(true);
   const [hostReservedSlots, setHostReservedSlots] = useState('1'); 
+
+  // --- NEW: AUTH & FORM RESTORATION ---
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (params.formState) {
+      try {
+        const restoredState = JSON.parse(params.formState);
+        
+        // Restore all state, making sure to handle dates correctly
+        setLocationQuery(restoredState.locationQuery || '');
+        setSelectedCourtData(restoredState.selectedCourtData || null);
+        setIsCustomLocation(restoredState.isCustomLocation || false);
+        setCourts(restoredState.courts || []);
+        setIsPrivate(restoredState.isPrivate || false);
+        setGameType(restoredState.gameType || 'Doubles');
+        setDate(restoredState.date ? new Date(restoredState.date) : getRoundedDate());
+        setEndDate(restoredState.endDate ? new Date(restoredState.endDate) : getRoundedDate());
+        setMinLevel(restoredState.minLevel || '');
+        setMaxLevel(restoredState.maxLevel || '');
+        setSlots(restoredState.slots || '');
+        setPrice(restoredState.price || '');
+        setIsHostPlaying(restoredState.isHostPlaying !== false);
+        setHostReservedSlots(restoredState.hostReservedSlots || '1');
+        
+        Alert.alert("Welcome back!", "Your game details have been restored.");
+
+      } catch (e) {
+        console.error("Failed to parse form state:", e);
+        Alert.alert("Error", "Could not restore your previous game details.");
+      }
+    }
+  }, [params.formState]);
+  // ------------------------------------
 
   const filteredCourts = SG_COURTS.filter(court => court.name.toLowerCase().includes(locationQuery.toLowerCase()));
 
@@ -108,7 +152,28 @@ export default function HostScreen() {
   // ----------------------------------
 
   const handleCreateGame = async () => {
-    if (!locationQuery || courts.length === 0 || !minLevel || !maxLevel || !slots || !price) {
+    const currentUser = auth.currentUser;
+
+    // --- NEW: AUTHENTICATION GATE & STATE PRESERVATION ---
+    if (!currentUser) {
+      const formState = {
+        locationQuery, selectedCourtData, isCustomLocation, courts, isPrivate,
+        gameType, date: date.toISOString(), endDate: endDate.toISOString(), minLevel, maxLevel, slots, price,
+        isHostPlaying, hostReservedSlots
+      };
+      
+      router.push({
+        pathname: '/login',
+        params: { 
+          redirect: '/host', 
+          formState: JSON.stringify(formState) 
+        }
+      });
+      return;
+    }
+    // -----------------------------------------------------
+
+    if (!locationQuery || courts.length === 0 || !minLevel || !maxLevel || !slots || (ENABLE_CREDITS && !price)) {
       alert("Please fill in all details, including at least one court number!"); return;
     }
     
@@ -118,8 +183,8 @@ export default function HostScreen() {
     
     for (let i = 0; i < reservedCount; i++) {
       initialRoster.push({ 
-        uid: i === 0 ? auth.currentUser.uid : `guest-${Date.now()}-${i}`, 
-        username: i === 0 ? (auth.currentUser.displayName || "Host") : "Host's Guest", 
+        uid: i === 0 ? currentUser.uid : `guest-${Date.now()}-${i}`, 
+        username: i === 0 ? (currentUser.displayName || "Host") : "Host's Guest", 
         checkedIn: true 
       });
     }
@@ -136,18 +201,19 @@ export default function HostScreen() {
         dateString: formatDateOnly(date), 
         startTimeString: formatTimeOnly(date), 
         endTimeString: formatTimeOnly(endDate), 
-        gameTimestamp: date.getTime(), 
+        gameTimestamp: date, // Using the full date object now
         level: minLevel === maxLevel ? minLevel : `${minLevel} - ${maxLevel}`, 
         slots: slots,
-        price: price, 
-        host: auth.currentUser.displayName || "Player", 
-        hostId: auth.currentUser.uid,
+        price: ENABLE_CREDITS ? price : '0', 
+        host: currentUser.displayName || "Player", 
+        hostId: currentUser.uid,
         playersJoined: initialRoster, 
         checkInPin: Math.floor(1000 + Math.random() * 9000).toString(),
         createdAt: new Date()
       });
       router.back(); 
     } catch (error) {
+      console.error("Game creation error: ", error)
       alert("Error creating game.");
     }
   };
@@ -297,14 +363,16 @@ export default function HostScreen() {
         </View>
 
         <View style={styles.row}>
-          <View style={{ flex: 1, marginRight: 10 }}>
+          <View style={{ flex: 1, marginRight: ENABLE_CREDITS ? 10 : 0 }}>
             <Text style={styles.label}>Total Slots</Text>
             <TextInput style={styles.input} placeholder="e.g. 6" keyboardType="numeric" value={slots} onChangeText={setSlots} />
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.label}>Credits / Pax</Text>
-            <TextInput style={styles.input} placeholder="e.g. 8" keyboardType="numeric" value={price} onChangeText={setPrice} />
-          </View>
+          {ENABLE_CREDITS && (
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Credits / Pax</Text>
+              <TextInput style={styles.input} placeholder="e.g. 8" keyboardType="numeric" value={price} onChangeText={setPrice} />
+            </View>
+          )}
         </View>
 
         {slots ? (

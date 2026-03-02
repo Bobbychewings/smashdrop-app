@@ -47,7 +47,7 @@ export default function ReviewScreen() {
     }
   };
 
-  if (loading) return <ActivityIndicator size="large" color="#007AFF" style={{ marginTop: 50 }} />;
+  if (loading) return <ActivityIndicator size="large" color="#FF3B30" style={{ marginTop: 50 }} />;
 
   return (
     <ScrollView style={styles.container}>
@@ -92,15 +92,15 @@ export default function ReviewScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F2F7', padding: 16 },
-  title: { fontSize: 28, fontWeight: 'bold', marginTop: 20, marginBottom: 8, color: '#333' },
-  subtitle: { fontSize: 16, color: '#666', marginBottom: 24 },
+  title: { fontFamily: 'Rajdhani_700Bold', fontSize: 28, marginTop: 20, marginBottom: 8, color: '#333' },
+  subtitle: { fontFamily: 'Rajdhani_500Medium', fontSize: 16, color: '#666', marginBottom: 24 },
   playerCard: { backgroundColor: '#fff', padding: 16, borderRadius: 12, marginBottom: 16, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 3, elevation: 2 },
-  playerName: { fontSize: 18, fontWeight: 'bold', color: '#333', marginBottom: 12 },
+  playerName: { fontFamily: 'Rajdhani_600SemiBold', fontSize: 18, color: '#333', marginBottom: 12 },
   voteRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
   voteBtn: { flex: 1, paddingVertical: 10, backgroundColor: '#F2F2F7', borderRadius: 8, alignItems: 'center', borderWidth: 1, borderColor: '#E5E5EA' },
-  voteBtnSelected: { backgroundColor: '#007AFF', borderColor: '#007AFF' },
-  voteText: { fontSize: 12, fontWeight: 'bold', color: '#666' },
+  voteBtnSelected: { backgroundColor: '#FF3B30', borderColor: '#FF3B30' },
+  voteText: { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#666' },
   voteTextSelected: { color: '#fff' },
   submitButton: { backgroundColor: '#34C759', paddingVertical: 16, borderRadius: 12, alignItems: 'center', marginTop: 10, marginBottom: 40 },
-  submitButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' }
+  submitButtonText: { fontFamily: 'Rajdhani_700Bold', color: '#fff', fontSize: 18 }
 });
