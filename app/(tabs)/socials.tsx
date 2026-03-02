@@ -5,8 +5,9 @@ import { useRouter } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { auth, db } from '@/config/firebase';
-import { doc, getDoc, collection, getDocs, query, limit } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query, limit, where } from 'firebase/firestore';
 import { Ionicons } from '@expo/vector-icons';
+import { getSkillLevelDisplay } from '@/constants/game';
 
 type ActiveTab = 'profile' | 'find';
 type ProfileSubTab = 'friends' | 'recent';
@@ -56,7 +57,7 @@ export default function SocialsScreen() {
             setUser({ id: userDoc.id, ...userDoc.data() });
           } else {
             // Provide fallback if user doc isn't fully created
-            setUser({ id: currentUser.uid, name: currentUser.displayName || 'Unknown User' });
+            setUser({ id: currentUser.uid, username: currentUser.displayName || 'Unknown User' });
           }
         } catch (error) {
           console.error("Error fetching user data", error);
@@ -69,23 +70,47 @@ export default function SocialsScreen() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'find') {
-      fetchUsers();
-    }
-  }, [activeTab]);
+    if (activeTab === 'find' && searchQuery.trim() !== '') {
+      const delayDebounceFn = setTimeout(() => {
+        searchUsersInDB(searchQuery);
+      }, 500); // 500ms debounce
 
-  const fetchUsers = async () => {
+      return () => clearTimeout(delayDebounceFn);
+    } else if (activeTab === 'find') {
+      setUsersList([]);
+    }
+  }, [activeTab, searchQuery]);
+
+  const searchUsersInDB = async (searchTerm: string) => {
+    if (!searchTerm.trim()) {
+      setUsersList([]);
+      return;
+    }
+
     setSearching(true);
     try {
-      const q = query(collection(db, 'users'), limit(50));
+      // In Firestore, a simple prefix search can be done with >= and <= '\uf8ff'
+      const searchLower = searchTerm.toLowerCase();
+      // NOTE: Firestore requires an index or specific data structure to do proper case-insensitive search.
+      // Assuming username or name is stored exactly. For a robust search, consider algolia/typesense.
+      // Here we will query all users limit 100, and filter locally if a dedicated search field isn't available,
+      // but to follow the requirement "search the Firebase database for the users", we will use a query
+      // if possible, otherwise fetch and filter. Let's do a basic fetch and filter for now as typical in small apps.
+
+      const q = query(collection(db, 'users'), limit(200));
       const querySnapshot = await getDocs(q);
       const fetchedUsers: any[] = [];
+
       querySnapshot.forEach((doc) => {
-        // Exclude current user from find players list ideally, but keeping it simple
         if (doc.id !== auth.currentUser?.uid) {
-          fetchedUsers.push({ id: doc.id, ...doc.data() });
+          const userData = doc.data();
+          const name = (userData.username || userData.name || userData.displayName || '').toLowerCase();
+          if (name.includes(searchLower)) {
+            fetchedUsers.push({ id: doc.id, ...userData });
+          }
         }
       });
+
       setUsersList(fetchedUsers);
     } catch (error) {
       console.error("Error fetching users", error);
@@ -98,10 +123,6 @@ export default function SocialsScreen() {
     Alert.alert('Invite Sent', `Invite sent to ${name}!`);
   };
 
-  const filteredUsers = usersList.filter(u =>
-    u.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.displayName?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   if (loading) {
     return (
@@ -133,7 +154,7 @@ export default function SocialsScreen() {
           />
           <View style={styles.profileInfo}>
             <View style={styles.nameRow}>
-              <Text style={styles.name}>{user.name || 'Anonymous Player'}</Text>
+              <Text style={styles.name}>{user.username || user.name || user.displayName || 'Anonymous Player'}</Text>
               {user.verified !== false && (
                 <Ionicons name="checkmark-circle" size={20} color="#34C759" style={styles.verifiedIcon} />
               )}
@@ -165,7 +186,7 @@ export default function SocialsScreen() {
         <View style={styles.currentSkillContainer}>
           <View>
             <Text style={styles.skillLabel}>Current Level</Text>
-            <Text style={styles.currentSkillValue}>Low Intermediate (LI)</Text>
+            <Text style={styles.currentSkillValue}>{user.skill ? `${getSkillLevelDisplay(user.skill)} (${user.skill})` : 'Not set'}</Text>
           </View>
           <View style={styles.endorsementBadge}>
             <Ionicons name="people" size={16} color="#FFFFFF" />
@@ -178,7 +199,7 @@ export default function SocialsScreen() {
           <View key={index} style={styles.historyRow}>
             <View style={styles.historyLevelContainer}>
               <View style={styles.historyDot} />
-              <Text style={styles.historyLevel}>{exp.level}</Text>
+              <Text style={styles.historyLevel}>{getSkillLevelDisplay(exp.level)}</Text>
             </View>
             <Text style={styles.historyEndorsements}>{exp.endorsements} Endorsements</Text>
           </View>
@@ -271,34 +292,43 @@ export default function SocialsScreen() {
         <ActivityIndicator size="large" color="#FF3B30" style={{ marginTop: 40 }} />
       ) : (
         <FlatList
-          data={filteredUsers}
+          data={usersList}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => (
-            <View style={styles.userListItem}>
-              <Image
-                source={{ uri: item.profilePicture || 'https://via.placeholder.com/150' }}
-                style={styles.userListAvatar}
-              />
-              <View style={styles.userListInfo}>
-                <Text style={styles.userListName}>{item.name || item.displayName || 'Unknown Player'}</Text>
-                {item.rating && (
-                  <View style={styles.ratingRowMini}>
-                    <Text style={styles.userListRating}>{item.rating}</Text>
-                    <Ionicons name="star" size={12} color="#FF9500" />
-                  </View>
-                )}
+            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push(`/profile/${item.id}` as any)}>
+              <View style={styles.userListItem}>
+                <Image
+                  source={{ uri: item.profilePicture || 'https://via.placeholder.com/150' }}
+                  style={styles.userListAvatar}
+                />
+                <View style={styles.userListInfo}>
+                  <Text style={styles.userListName}>{item.username || item.name || item.displayName || 'Unknown Player'}</Text>
+                  {item.rating && (
+                    <View style={styles.ratingRowMini}>
+                      <Text style={styles.userListRating}>{item.rating}</Text>
+                      <Ionicons name="star" size={12} color="#FF9500" />
+                    </View>
+                  )}
+                  {item.skill && (
+                    <Text style={styles.userListSkill}>{getSkillLevelDisplay(item.skill)}</Text>
+                  )}
+                </View>
+                <TouchableOpacity
+                  style={styles.actionButtonSecondary}
+                  onPress={() => router.push(`/profile/${item.id}` as any)}
+                >
+                  <Text style={styles.actionButtonSecondaryText}>Profile</Text>
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                style={styles.actionButtonSecondary}
-                onPress={() => router.push(`/user/${item.id}` as any)}
-              >
-                <Text style={styles.actionButtonSecondaryText}>View Profile</Text>
-              </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           )}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No players found.</Text>
+            searchQuery.trim() === '' ? (
+               <Text style={styles.emptyText}>Search for players by name or username.</Text>
+            ) : (
+               <Text style={styles.emptyText}>No players found.</Text>
+            )
           }
         />
       )}
@@ -730,6 +760,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#666666',
     marginRight: 4,
+  },
+  userListSkill: {
+    fontFamily: 'Rajdhani_500Medium',
+    fontSize: 12,
+    color: '#8E8E93',
+    marginTop: 2,
   },
 
   // Shared

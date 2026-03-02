@@ -2,7 +2,9 @@ import { auth, db } from '@/config/firebase';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { arrayRemove, arrayUnion, doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Share } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { getSkillLevelDisplay } from '@/constants/game';
 
 // THE MASTER SWITCH: Change to true when you are ready to monetize!
 const ENABLE_CREDITS = false;
@@ -50,6 +52,16 @@ export default function GameLobbyScreen() {
   const timeUntilGameMs = game.gameTimestamp.seconds * 1000 - now;
   const hoursUntilGame = timeUntilGameMs / (1000 * 60 * 60);
   const isLateCancellation = ENABLE_CREDITS && hoursSinceJoined > 1 && hoursUntilGame <= 24;
+
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `Join my badminton game on SmashDrop! Game ID: ${game.id}\nLocation: ${game.location}\nDate: ${game.dateString}\nTime: ${game.startTimeString} - ${game.endTimeString}`,
+      });
+    } catch (error: any) {
+      Alert.alert(error.message);
+    }
+  };
 
   const handleJoinLobby = async () => {
     if (!auth.currentUser) return Alert.alert("Login Required", "You must be logged in to join!");
@@ -157,7 +169,15 @@ export default function GameLobbyScreen() {
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       
-      <View style={styles.header}><Text style={styles.title}>Game Lobby</Text><Text style={styles.hostText}>Hosted by: {game.host}</Text></View>
+      <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <Text style={styles.title}>Game Lobby</Text>
+          <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
+            <Ionicons name="share-outline" size={24} color="#007AFF" />
+          </TouchableOpacity>
+        </View>
+        <Text style={styles.hostText}>Hosted by: {game.host}</Text>
+      </View>
 
       <View style={styles.detailsCard}>
         <View style={styles.detailHeader}><Text style={styles.locationText}>{game.location}</Text><Text style={styles.roomIdText}>ID: {game.id}</Text></View>
@@ -168,7 +188,7 @@ export default function GameLobbyScreen() {
           <View style={styles.gridItem}><Text style={styles.label}>TYPE</Text><Text style={styles.value}>{game.gameType}</Text></View>
         </View>
         <View style={styles.grid}>
-          <View style={styles.gridItem}><Text style={styles.label}>SKILL LEVEL</Text><Text style={styles.value}>{game.level}</Text></View>
+          <View style={styles.gridItem}><Text style={styles.label}>SKILL LEVEL</Text><Text style={styles.value}>{getSkillLevelDisplay(game.level)}</Text></View>
           {ENABLE_CREDITS && <View style={styles.gridItem}><Text style={styles.label}>FEE</Text><Text style={styles.value}>{game.price} Credits</Text></View>}
           <View style={styles.gridItem}><Text style={styles.label}>STATUS</Text><Text style={[styles.value, { color: slotsLeft > 0 ? '#34C759' : '#FF3B30' }]}>{slotsLeft > 0 ? `${slotsLeft} OPEN` : "FULL"}</Text></View>
         </View>
@@ -210,7 +230,9 @@ export default function GameLobbyScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F2F7', padding: 16 },
   header: { marginTop: 30, marginBottom: 20 },
+  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   title: { fontFamily: 'Rajdhani_700Bold', fontSize: 32, color: '#1C1C1E', letterSpacing: 1 },
+  shareButton: { padding: 8, backgroundColor: '#E5E5EA', borderRadius: 20 },
   hostText: { fontFamily: 'Rajdhani_600SemiBold', fontSize: 16, color: '#666666' },
   detailsCard: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20, marginBottom: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
   detailHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', borderBottomWidth: 1, borderBottomColor: '#E5E5EA', paddingBottom: 12, marginBottom: 12 },
