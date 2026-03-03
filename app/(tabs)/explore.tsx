@@ -173,7 +173,7 @@ export default function ExploreScreen() {
                 <Text style={styles.settingsText}>Settings</Text>
               </TouchableOpacity>
             </>
-          ) : <Link href="/login" style={styles.loginLink}>Login</Link>}
+          ) : <Link href={{ pathname: "/login", params: { redirect: "/(tabs)/explore" } }} style={styles.loginLink}>Login</Link>}
           <Link href="/host" style={styles.hostLink}>+ Host</Link>
         </View>
       </View>
