@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F2F7', padding: 16 }, 
   header: { marginTop: 10, marginBottom: 20 },
   headerLogoContainer: { marginBottom: 12 },
-  headerLogo: { width: 140, height: 40 },
+  headerLogo: { width: 180, height: 50 },
   subtitle: { fontFamily: 'Rajdhani_600SemiBold', fontSize: 16, color: '#8E8E93' },
   formCard: { backgroundColor: '#FFFFFF', padding: 20, borderRadius: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3, marginBottom: 40 }, 
   inputGroup: { marginBottom: 20 },

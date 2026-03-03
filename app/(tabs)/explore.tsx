@@ -220,7 +220,7 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F2F7' },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10, backgroundColor: '#FFFFFF' },
-  headerLogo: { width: 140, height: 40 },
+  headerLogo: { width: 180, height: 50 },
   actionRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
   profilePictureMini: { width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: '#E5E5EA' },
   settingsButton: { flexDirection: 'row', alignItems: 'center', padding: 4 },

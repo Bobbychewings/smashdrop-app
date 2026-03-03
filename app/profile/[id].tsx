@@ -122,8 +122,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerLogo: {
-    width: 140,
-    height: 40,
+    width: 180,
+    height: 50,
   },
   profileHeader: {
     alignItems: 'center',

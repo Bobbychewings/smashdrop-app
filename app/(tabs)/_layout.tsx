@@ -18,7 +18,7 @@ export default function TabLayout() {
         options={{
           title: 'Explore',
           tabBarIcon: ({ color, focused }) => (
-            <IconSymbol name="search" color={color} />
+            <IconSymbol name="magnifyingglass" color={color} />
           ),
         }}
       />
@@ -27,7 +27,7 @@ export default function TabLayout() {
         options={{
           title: 'My Games',
           tabBarIcon: ({ color, focused }) => (
-            <IconSymbol name="list" color={color} />
+            <IconSymbol name="list.bullet" color={color} />
           ),
         }}
       />
@@ -36,7 +36,7 @@ export default function TabLayout() {
         options={{
           title: 'Socials',
           tabBarIcon: ({ color, focused }) => (
-            <IconSymbol name="person" color={color} />
+            <IconSymbol name="person.2.fill" color={color} />
           ),
         }}
       />
