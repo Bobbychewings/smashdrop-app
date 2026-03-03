@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { auth, db } from '@/config/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, onSnapshot, orderBy, getDocs } from 'firebase/firestore';
 import GameCard from '@/components/GameCard';
 
@@ -12,16 +13,30 @@ export default function MyGamesScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>('upcoming');
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
   const [upcomingGames, setUpcomingGames] = useState<any[]>([]);
   const [pastGames, setPastGames] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!auth.currentUser) {
-      setLoading(false);
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (!currentUser) {
+        setLoading(false);
+        setUpcomingGames([]);
+        setPastGames([]);
+      }
+    });
+
+    return () => unsubscribeAuth();
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
       return;
     }
 
-    const userId = auth.currentUser.uid;
+    setLoading(true);
+    const userId = user.uid;
     const now = new Date();
 
     // Query for games where the user is the host
@@ -98,7 +113,7 @@ export default function MyGamesScreen() {
     });
 
     return () => unsubscribe();
-  }, [auth.currentUser]);
+  }, [user]);
 
   if (loading) {
     return (
@@ -108,7 +123,7 @@ export default function MyGamesScreen() {
     );
   }
 
-  if (!auth.currentUser) {
+  if (!user) {
     return (
       <SafeAreaView style={[styles.centerContainer, { backgroundColor: '#F2F2F7' }]}>
         <Text style={styles.emptyText}>Please log in to view your games.</Text>
