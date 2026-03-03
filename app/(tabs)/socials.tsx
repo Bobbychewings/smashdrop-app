@@ -6,6 +6,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { auth, db } from '@/config/firebase';
 import { doc, getDoc, collection, getDocs, query, limit, where } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 import { Ionicons } from '@expo/vector-icons';
 import { getSkillLevelDisplay } from '@/constants/game';
 
@@ -48,8 +49,7 @@ export default function SocialsScreen() {
   const [searching, setSearching] = useState(false);
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      const currentUser = auth.currentUser;
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         try {
           const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
@@ -61,12 +61,15 @@ export default function SocialsScreen() {
           }
         } catch (error) {
           console.error("Error fetching user data", error);
+          setUser({ id: currentUser.uid, username: currentUser.displayName || 'Unknown User' });
         }
+      } else {
+        setUser(null);
       }
       setLoading(false);
-    };
+    });
 
-    fetchUserData();
+    return () => unsubscribeAuth();
   }, []);
 
   useEffect(() => {

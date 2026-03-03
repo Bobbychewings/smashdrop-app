@@ -1,10 +1,11 @@
 import { auth, db } from '@/config/firebase';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { arrayRemove, arrayUnion, doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Share, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getSkillLevelDisplay } from '@/constants/game';
+import * as Clipboard from 'expo-clipboard';
 
 // THE MASTER SWITCH: Change to true when you are ready to monetize!
 const ENABLE_CREDITS = false;
@@ -14,15 +15,40 @@ export default function GameLobbyScreen() {
   const router = useRouter();
   const [game, setGame] = useState(null);
   const [pinInput, setPinInput] = useState('');
+  const [userProfiles, setUserProfiles] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!id) {
       router.back();
       return;
     }
-    const unsub = onSnapshot(doc(db, 'games', id as string), (docSnap) => {
+    const unsub = onSnapshot(doc(db, 'games', id as string), async (docSnap) => {
       if (docSnap.exists()) {
-        setGame({ id: docSnap.id, ...docSnap.data() });
+        const gameData = { id: docSnap.id, ...docSnap.data() } as any;
+        setGame(gameData);
+
+        // Fetch profile pictures for host and all joined players
+        const uidsToFetch = new Set<string>();
+        if (gameData.hostId) uidsToFetch.add(gameData.hostId);
+        if (gameData.playersJoined) {
+          gameData.playersJoined.forEach((p: any) => p.uid && uidsToFetch.add(p.uid));
+        }
+        if (gameData.waitlist) {
+          gameData.waitlist.forEach((p: any) => p.uid && uidsToFetch.add(p.uid));
+        }
+
+        const profiles: Record<string, string> = {};
+        for (const uid of uidsToFetch) {
+          try {
+            const userDoc = await getDoc(doc(db, 'users', uid));
+            if (userDoc.exists() && userDoc.data().profilePicture) {
+              profiles[uid] = userDoc.data().profilePicture;
+            }
+          } catch (e) {
+            console.error("Error fetching user profile", e);
+          }
+        }
+        setUserProfiles(prev => ({ ...prev, ...profiles }));
       } else {
         Alert.alert("Error", "This game no longer exists.");
         router.back();
@@ -174,12 +200,19 @@ export default function GameLobbyScreen() {
     }
   };
 
+  const handleCopyPin = async () => {
+    await Clipboard.setStringAsync(game.checkInPin);
+    Alert.alert("Copied!", "Check-in PIN copied to clipboard.");
+  };
+
   const courtsDisplay = game.courts?.join(', ') || "TBD";
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      
-      <View style={styles.header}>
+    <>
+      <Stack.Screen options={{ headerBackTitle: 'Back', headerTitle: 'Game Lobby' }} />
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+
+        <View style={styles.header}>
         <View style={styles.headerTop}>
           <Image
             source={require('../../assets/images/horizontal-icon.png')}
@@ -208,14 +241,27 @@ export default function GameLobbyScreen() {
         </View>
       </View>
 
-      {isHost && <View style={styles.securityCardHost}><Text style={styles.securityTitleHost}>Host Check-In PIN</Text><Text style={styles.pinDisplay}>{game.checkInPin}</Text><Text style={styles.securitySubtext}>Share this code with players when they arrive.</Text></View>}
+      {isHost && <View style={styles.securityCardHost}>
+        <Text style={styles.securityTitleHost}>Host Check-In PIN</Text>
+        <View style={styles.pinDisplayRow}>
+          <Text style={styles.pinDisplay}>{game.checkInPin}</Text>
+          <TouchableOpacity onPress={handleCopyPin} style={styles.copyButton}>
+            <Ionicons name="copy-outline" size={24} color="#FF3B30" />
+          </TouchableOpacity>
+        </View>
+        <Text style={styles.securitySubtext}>Share this code with players when they arrive.</Text>
+      </View>}
       {!isHost && isAlreadyJoined && !isCheckedIn && <View style={styles.securityCardPlayer}><Text style={styles.securityTitlePlayer}>Court Check-In</Text><Text style={styles.securitySubtextWarning}>Do not enter this PIN until you physically arrive.</Text><View style={styles.pinRow}><TextInput style={styles.pinInput} placeholder="0000" keyboardType="numeric" maxLength={4} value={pinInput} onChangeText={setPinInput} /><TouchableOpacity style={styles.checkInSubmitBtn} onPress={handleCheckIn}><Text style={styles.checkInSubmitText}>Verify</Text></TouchableOpacity></View></View>}
 
       <Text style={styles.rosterTitle}>Player Roster ({roster.length}/{totalSlots})</Text>
       <View style={styles.rosterCard}>
         {roster.length === 0 ? <Text style={styles.emptyRoster}>Waiting for players...</Text> : roster.map((player) => (
           <View key={player.uid} style={styles.playerRow}>
-            <View style={styles.avatarMini}><Text style={styles.avatarMiniText}>{player.username.charAt(0).toUpperCase()}</Text></View>
+            {userProfiles[player.uid] ? (
+              <Image source={{ uri: userProfiles[player.uid] }} style={styles.avatarMiniImage} />
+            ) : (
+              <View style={styles.avatarMini}><Text style={styles.avatarMiniText}>{player.username.charAt(0).toUpperCase()}</Text></View>
+            )}
             <Text style={styles.playerName}>{player.username} {player.uid === game.hostId && "(Host)"}</Text>
             {player.uid !== auth.currentUser?.uid && !player.uid.startsWith('guest-') && <TouchableOpacity onPress={() => router.push(`/report/${player.uid}`)} style={styles.flagBtn}><Text>🚩</Text></TouchableOpacity>}
             {player.checkedIn && <Text style={styles.checkedInBadge}>✅ Verified</Text>}
@@ -223,7 +269,13 @@ export default function GameLobbyScreen() {
         ))}
       </View>
 
-      {waitlist.length > 0 && <><Text style={styles.rosterTitle}>Waitlist</Text><View style={styles.rosterCard}>{waitlist.map((player, index) => (<View key={player.uid} style={styles.playerRow}><Text style={styles.queueNumber}>{index + 1}.</Text><View style={styles.avatarMini}><Text style={styles.avatarMiniText}>{player.username.charAt(0).toUpperCase()}</Text></View><Text style={styles.playerName}>{player.username}</Text></View>))}</View></>}
+      {waitlist.length > 0 && <><Text style={styles.rosterTitle}>Waitlist</Text><View style={styles.rosterCard}>{waitlist.map((player, index) => (<View key={player.uid} style={styles.playerRow}><Text style={styles.queueNumber}>{index + 1}.</Text>
+        {userProfiles[player.uid] ? (
+          <Image source={{ uri: userProfiles[player.uid] }} style={styles.avatarMiniImage} />
+        ) : (
+          <View style={styles.avatarMini}><Text style={styles.avatarMiniText}>{player.username.charAt(0).toUpperCase()}</Text></View>
+        )}
+      <Text style={styles.playerName}>{player.username}</Text></View>))}</View></>}
 
       <View style={styles.actionContainer}>
         {isHost ? <Text style={styles.hostNotice}>You are organizing this game.</Text>
@@ -236,8 +288,9 @@ export default function GameLobbyScreen() {
         {isAlreadyJoined && <TouchableOpacity style={styles.reviewButton} onPress={() => router.push(`/review/${id}`)}><Text style={styles.buttonTextPrimaryWhite}>Rate Players</Text></TouchableOpacity>}
       </View>
 
-      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}><Text style={styles.backButtonText}>Back to Feed</Text></TouchableOpacity>
-    </ScrollView>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}><Text style={styles.backButtonText}>Back to Feed</Text></TouchableOpacity>
+      </ScrollView>
+    </>
   );
 }
 
@@ -258,7 +311,9 @@ const styles = StyleSheet.create({
   value: { fontFamily: 'Rajdhani_700Bold', color: '#1C1C1E', fontSize: 16, marginTop: 4 },
   securityCardHost: { backgroundColor: '#FFF0F0', padding: 20, borderRadius: 12, borderWidth: 1, borderColor: '#FF3B30', marginBottom: 24, alignItems: 'center' },
   securityTitleHost: { fontFamily: 'Rajdhani_700Bold', fontSize: 18, color: '#FF3B30' },
+  pinDisplayRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   pinDisplay: { fontFamily: 'Rajdhani_700Bold', fontSize: 42, color: '#1C1C1E', letterSpacing: 12, marginVertical: 8 },
+  copyButton: { padding: 8, marginLeft: 8 },
   securitySubtext: { fontFamily: 'Rajdhani_600SemiBold', fontSize: 14, color: '#666666', textAlign: 'center' },
   securityCardPlayer: { backgroundColor: '#FFF7E5', padding: 20, borderRadius: 12, borderWidth: 1, borderColor: '#FF9500', marginBottom: 24 },
   securityTitlePlayer: { fontFamily: 'Rajdhani_700Bold', fontSize: 18, color: '#FF9500', marginBottom: 4 },
@@ -273,6 +328,7 @@ const styles = StyleSheet.create({
   playerRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F2F2F7' },
   queueNumber: { fontFamily: 'Rajdhani_700Bold', color: '#8E8E93', fontSize: 16, marginRight: 10 },
   avatarMini: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#F2F2F7', justifyContent: 'center', alignItems: 'center', marginRight: 12, borderWidth: 1, borderColor: '#E5E5EA' },
+  avatarMiniImage: { width: 36, height: 36, borderRadius: 18, marginRight: 12, borderWidth: 1, borderColor: '#E5E5EA' },
   avatarMiniText: { fontFamily: 'Rajdhani_700Bold', color: '#1C1C1E', fontSize: 16 },
   playerName: { flex: 1, fontFamily: 'Rajdhani_600SemiBold', fontSize: 18, color: '#1C1C1E' },
   flagBtn: { padding: 4, marginRight: 8 },

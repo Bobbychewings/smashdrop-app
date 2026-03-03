@@ -6,7 +6,7 @@ import { SKILL_LEVELS, SKILL_LEVELS_DISPLAY } from '@/constants/game';
 import { SG_COURTS } from '@/utils/locations';
 import { Link, useRouter } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { collection, onSnapshot, orderBy, query, doc, getDoc } from 'firebase/firestore';
 import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,6 +23,7 @@ const AREAS_BY_REGION = SG_COURTS.reduce((acc, court) => {
 export default function ExploreScreen() {
   const [games, setGames] = useState([]);
   const [user, setUser] = useState(null);
+  const [userProfileData, setUserProfileData] = useState(null);
   const router = useRouter();
 
   // --- ALL FILTER STATE NOW LIVES HERE ---
@@ -40,8 +41,20 @@ export default function ExploreScreen() {
   }, [filterRegion]);
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      if (currentUser) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          if (userDoc.exists()) {
+            setUserProfileData(userDoc.data());
+          }
+        } catch (error) {
+          console.error("Error fetching user profile data", error);
+        }
+      } else {
+        setUserProfileData(null);
+      }
     });
     const q = query(collection(db, 'games'), orderBy('gameTimestamp', 'asc'));
     const unsubscribeGames = onSnapshot(q, (snapshot) => {
@@ -150,9 +163,16 @@ export default function ExploreScreen() {
         />
         <View style={styles.actionRow}>
           {user ? (
-            <TouchableOpacity onPress={() => router.push('/settings')} style={styles.settingsButton}>
-              <IconSymbol name="gear" />
-            </TouchableOpacity>
+            <>
+              <Image
+                source={{ uri: userProfileData?.profilePicture || 'https://via.placeholder.com/150' }}
+                style={styles.profilePictureMini}
+              />
+              <TouchableOpacity onPress={() => router.push('/settings')} style={styles.settingsButton}>
+                <IconSymbol name="gear" />
+                <Text style={styles.settingsText}>Settings</Text>
+              </TouchableOpacity>
+            </>
           ) : <Link href="/login" style={styles.loginLink}>Login</Link>}
           <Link href="/host" style={styles.hostLink}>+ Host</Link>
         </View>
@@ -202,7 +222,9 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10, backgroundColor: '#FFFFFF' },
   headerLogo: { width: 140, height: 40 },
   actionRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
-  settingsButton: { padding: 4 },
+  profilePictureMini: { width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: '#E5E5EA' },
+  settingsButton: { flexDirection: 'row', alignItems: 'center', padding: 4 },
+  settingsText: { marginLeft: 4, fontFamily: 'Rajdhani_600SemiBold', fontSize: 16, color: '#1C1C1E' },
   loginLink: { backgroundColor: '#E5E5EA', color: '#333', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, fontFamily: 'Rajdhani_600SemiBold', overflow: 'hidden' },
   hostLink: { backgroundColor: '#FF3B30', color: '#fff', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, fontFamily: 'Rajdhani_700Bold', overflow: 'hidden' },
   
