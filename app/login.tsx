@@ -1,7 +1,7 @@
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert, Image } from 'react-native';
 
 // NEW: We import doc and setDoc to create their user profile in the database
 import { auth, db } from '@/config/firebase'; // Added db here!
@@ -46,6 +46,7 @@ export default function LoginScreen() {
         await setDoc(doc(db, 'users', userCredential.user.uid), {
           username: username,
           email: email,
+          profilePicture: '', // Explicitly set empty so fallbacks trigger
           claimedSkill: personalSkill,
           verifiedSkill: 'Unverified', 
           reliabilityScore: 100,       
@@ -68,7 +69,13 @@ export default function LoginScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>SmashDrop</Text>
+      <View style={styles.logoContainer}>
+        <Image
+          source={require('../assets/images/square-icon.png')}
+          style={styles.logoImage}
+          resizeMode="contain"
+        />
+      </View>
       <Text style={styles.subtitle}>{isSignUp ? "Create your player profile" : "Sign in to join the community"}</Text>
 
       <View style={styles.formCard}>
@@ -118,7 +125,8 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   container: { flexGrow: 1, backgroundColor: '#F2F2F7', padding: 16, justifyContent: 'center' },
-  title: { fontFamily: 'Rajdhani_700Bold', fontSize: 40, textAlign: 'center', color: '#FF3B30', marginBottom: 8, marginTop: 40 },
+  logoContainer: { alignItems: 'center', marginBottom: 10, marginTop: 40 },
+  logoImage: { width: 120, height: 120 },
   subtitle: { fontFamily: 'Rajdhani_600SemiBold', fontSize: 16, color: '#8E8E93', textAlign: 'center', marginBottom: 32 },
   formCard: { backgroundColor: '#fff', padding: 24, borderRadius: 16, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
   label: { fontFamily: 'Rajdhani_700Bold', fontSize: 14, color: '#666666', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },

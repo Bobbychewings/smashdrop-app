@@ -339,6 +339,13 @@ export default function SocialsScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Top Toggle */}
       <View style={styles.header}>
+        <View style={styles.headerLogoContainer}>
+          <Image
+            source={require('../../assets/images/horizontal-icon.png')}
+            style={styles.headerLogo}
+            resizeMode="contain"
+          />
+        </View>
         <View style={styles.toggleContainer}>
           <TouchableOpacity
             style={[styles.toggleBtn, activeTab === 'profile' && styles.toggleBtnActive]}
@@ -376,6 +383,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5EA',
+  },
+  headerLogoContainer: {
+    marginBottom: 12,
+  },
+  headerLogo: {
+    width: 140,
+    height: 40,
   },
   toggleContainer: {
     flexDirection: 'row',

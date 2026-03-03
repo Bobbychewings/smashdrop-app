@@ -8,7 +8,7 @@ import { Link, useRouter } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // --- FILTER DATA ---
@@ -97,7 +97,15 @@ export default function ExploreScreen() {
     const matchesDate = !filterDate || game.dateString === filterDate;
     const matchesArea = filterAreas.length === 0 || filterAreas.includes(game.area);
     const matchesTimeSlot = filterTimeSlots.length === 0 || filterTimeSlots.some(slot => {
-        const gameHour = new Date(game.gameTimestamp.seconds * 1000).getHours();
+        let gameHour = 0;
+        if (game.gameTimestamp?.toDate) {
+            gameHour = game.gameTimestamp.toDate().getHours();
+        } else if (game.gameTimestamp?.seconds) {
+            gameHour = new Date(game.gameTimestamp.seconds * 1000).getHours();
+        } else if (game.gameTimestamp) {
+            gameHour = new Date(game.gameTimestamp).getHours();
+        }
+
         if (slot === 'Morning') return gameHour >= 6 && gameHour < 12;
         if (slot === 'Afternoon') return gameHour >= 12 && gameHour < 18;
         if (slot === 'Evening') return gameHour >= 18 && gameHour < 24;
@@ -135,7 +143,11 @@ export default function ExploreScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>SmashDrop</Text>
+        <Image
+          source={require('../../assets/images/horizontal-icon.png')}
+          style={styles.headerLogo}
+          resizeMode="contain"
+        />
         <View style={styles.actionRow}>
           {user ? (
             <TouchableOpacity onPress={() => router.push('/settings')} style={styles.settingsButton}>
@@ -188,7 +200,7 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F2F7' },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10, backgroundColor: '#FFFFFF' },
-  title: { fontFamily: 'Rajdhani_700Bold', fontSize: 32, color: '#1C1C1E' },
+  headerLogo: { width: 140, height: 40 },
   actionRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
   settingsButton: { padding: 4 },
   loginLink: { backgroundColor: '#E5E5EA', color: '#333', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, fontFamily: 'Rajdhani_600SemiBold', overflow: 'hidden' },

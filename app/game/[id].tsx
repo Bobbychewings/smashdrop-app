@@ -2,7 +2,7 @@ import { auth, db } from '@/config/firebase';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { arrayRemove, arrayUnion, doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Share } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Share, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getSkillLevelDisplay } from '@/constants/game';
 
@@ -49,7 +49,17 @@ export default function GameLobbyScreen() {
   const now = Date.now();
   const timeSinceJoinedMs = currentPlayerRecord ? now - (currentPlayerRecord.joinedAt || now) : 0;
   const hoursSinceJoined = timeSinceJoinedMs / (1000 * 60 * 60);
-  const timeUntilGameMs = game.gameTimestamp.seconds * 1000 - now;
+
+  let gameTimeMs = 0;
+  if (game.gameTimestamp?.toDate) {
+    gameTimeMs = game.gameTimestamp.toDate().getTime();
+  } else if (game.gameTimestamp?.seconds) {
+    gameTimeMs = game.gameTimestamp.seconds * 1000;
+  } else if (game.gameTimestamp) {
+    gameTimeMs = new Date(game.gameTimestamp).getTime();
+  }
+
+  const timeUntilGameMs = gameTimeMs - now;
   const hoursUntilGame = timeUntilGameMs / (1000 * 60 * 60);
   const isLateCancellation = ENABLE_CREDITS && hoursSinceJoined > 1 && hoursUntilGame <= 24;
 
@@ -171,7 +181,11 @@ export default function GameLobbyScreen() {
       
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Text style={styles.title}>Game Lobby</Text>
+          <Image
+            source={require('../../assets/images/horizontal-icon.png')}
+            style={styles.headerLogo}
+            resizeMode="contain"
+          />
           <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
             <Ionicons name="share-outline" size={24} color="#007AFF" />
           </TouchableOpacity>
@@ -231,7 +245,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F2F7', padding: 16 },
   header: { marginTop: 30, marginBottom: 20 },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  title: { fontFamily: 'Rajdhani_700Bold', fontSize: 32, color: '#1C1C1E', letterSpacing: 1 },
+  headerLogo: { width: 140, height: 40 },
   shareButton: { padding: 8, backgroundColor: '#E5E5EA', borderRadius: 20 },
   hostText: { fontFamily: 'Rajdhani_600SemiBold', fontSize: 16, color: '#666666' },
   detailsCard: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20, marginBottom: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },

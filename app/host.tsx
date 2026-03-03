@@ -6,7 +6,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router'; // Stack a
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { Platform, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View, Alert, Image } from 'react-native';
 
 // THE MASTER SWITCH: Change to true when you are ready to monetize!
 const ENABLE_CREDITS = false;
@@ -201,7 +201,7 @@ export default function HostScreen() {
         dateString: formatDateOnly(date), 
         startTimeString: formatTimeOnly(date), 
         endTimeString: formatTimeOnly(endDate), 
-        gameTimestamp: date, // Using the full date object now
+        gameTimestamp: date, // Keep full date object, Firestore will convert Date to Timestamp via setDoc
         level: minLevel === maxLevel ? minLevel : `${minLevel} - ${maxLevel}`, 
         slots: slots,
         price: ENABLE_CREDITS ? price : '0', 
@@ -229,7 +229,13 @@ export default function HostScreen() {
       <Stack.Screen options={{ headerTitle: 'Create a Game', headerBackTitle: 'Back' }} />
 
       <View style={styles.header}>
-        <Text style={styles.title}>Create a Game</Text>
+        <View style={styles.headerLogoContainer}>
+          <Image
+            source={require('../assets/images/horizontal-icon.png')}
+            style={styles.headerLogo}
+            resizeMode="contain"
+          />
+        </View>
         <Text style={styles.subtitle}>Set your court details to invite players.</Text>
       </View>
 
@@ -394,7 +400,8 @@ export default function HostScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F2F7', padding: 16 }, 
   header: { marginTop: 10, marginBottom: 20 },
-  title: { fontFamily: 'Rajdhani_700Bold', fontSize: 36, color: '#1C1C1E', letterSpacing: 1 },
+  headerLogoContainer: { marginBottom: 12 },
+  headerLogo: { width: 140, height: 40 },
   subtitle: { fontFamily: 'Rajdhani_600SemiBold', fontSize: 16, color: '#8E8E93' },
   formCard: { backgroundColor: '#FFFFFF', padding: 20, borderRadius: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3, marginBottom: 40 }, 
   inputGroup: { marginBottom: 20 },
