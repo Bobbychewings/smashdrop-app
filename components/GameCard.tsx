@@ -41,7 +41,7 @@ export default function GameCard({ id, location, courts, dateString, startTimeSt
             {hostData?.profilePicture ? (
               <Image source={{ uri: hostData.profilePicture }} style={styles.avatarMiniImage} />
             ) : (
-              <View style={styles.avatarMini}><Text style={styles.avatarMiniText}>{host?.charAt(0) || '?'}</Text></View>
+              <View style={styles.avatarMini}><Text style={styles.avatarMiniText}>{(hostData?.username || host || '?').charAt(0).toUpperCase()}</Text></View>
             )}
             <View style={styles.hostInfo}>
               <Text style={styles.hostName}>{host}</Text>

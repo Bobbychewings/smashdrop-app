@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { auth, db } from '@/config/firebase';
@@ -54,7 +54,15 @@ export default function MyGamesScreen() {
           // Parse endTimeString to figure out if game has ended
           let isPast = false;
           if (game.gameTimestamp) {
-             const gameDate = game.gameTimestamp.toDate();
+            let gameDate: Date;
+            if (typeof game.gameTimestamp.toDate === 'function') {
+                gameDate = game.gameTimestamp.toDate();
+            } else if (game.gameTimestamp.seconds) {
+                gameDate = new Date(game.gameTimestamp.seconds * 1000);
+            } else {
+                gameDate = new Date(game.gameTimestamp);
+            }
+
              // Simple check based on timestamp (start time). To be precise about end time,
              // we'd parse endTimeString, but assuming standard 2-hour game
              const gameEndTime = new Date(gameDate.getTime() + 2 * 60 * 60 * 1000);
@@ -72,7 +80,14 @@ export default function MyGamesScreen() {
       });
 
       // Sort past games descending (newest past games first)
-      past.sort((a, b) => b.gameTimestamp.toDate().getTime() - a.gameTimestamp.toDate().getTime());
+      const getTime = (timestamp: any) => {
+        if (!timestamp) return 0;
+        if (typeof timestamp.toDate === 'function') return timestamp.toDate().getTime();
+        if (timestamp.seconds) return timestamp.seconds * 1000;
+        return new Date(timestamp).getTime();
+      };
+
+      past.sort((a, b) => getTime(b.gameTimestamp) - getTime(a.gameTimestamp));
 
       setUpcomingGames(upcoming);
       setPastGames(past);
@@ -135,7 +150,13 @@ export default function MyGamesScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Games</Text>
+        <View style={styles.headerLogoContainer}>
+          <Image
+            source={require('../../assets/images/horizontal-icon.png')}
+            style={styles.headerLogo}
+            resizeMode="contain"
+          />
+        </View>
         <View style={styles.toggleContainer}>
           <TouchableOpacity
             style={[styles.toggleBtn, activeTab === 'upcoming' && styles.toggleBtnActive]}
@@ -178,11 +199,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5EA',
   },
-  headerTitle: {
-    fontFamily: 'Rajdhani_700Bold',
-    fontSize: 28,
-    color: '#1C1C1E',
+  headerLogoContainer: {
     marginBottom: 12,
+  },
+  headerLogo: {
+    width: 140,
+    height: 40,
   },
   toggleContainer: {
     flexDirection: 'row',

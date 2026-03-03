@@ -180,7 +180,13 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.headerTitle}>Settings & Profile</Text>
+      <View style={styles.headerLogoContainer}>
+        <Image
+          source={require('../assets/images/horizontal-icon.png')}
+          style={styles.headerLogo}
+          resizeMode="contain"
+        />
+      </View>
 
       <View style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
@@ -270,7 +276,8 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F2F7', padding: 16 },
   loadingText: { textAlign: 'center', marginTop: 50, fontSize: 16, color: '#666' },
-  headerTitle: { fontSize: 32, fontWeight: '800', color: '#1C1C1E', marginBottom: 20, marginTop: 20 },
+  headerLogoContainer: { marginBottom: 20, marginTop: 40 },
+  headerLogo: { width: 140, height: 40 },
   
   sectionCard: { backgroundColor: '#fff', borderRadius: 16, padding: 20, marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 3 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },

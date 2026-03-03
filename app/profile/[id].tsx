@@ -82,6 +82,13 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={styles.headerLogoContainer}>
+        <Image
+          source={require('../../assets/images/horizontal-icon.png')}
+          style={styles.headerLogo}
+          resizeMode="contain"
+        />
+      </View>
       <View style={styles.profileHeader}>
         <Image source={{ uri: user.profilePicture || 'https://via.placeholder.com/150' }} style={styles.profilePicture} />
         <Text style={[styles.name, { color: colors.text }]}>{user.name}</Text>
@@ -108,6 +115,15 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  headerLogoContainer: {
+    marginBottom: 20,
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  headerLogo: {
+    width: 140,
+    height: 40,
   },
   profileHeader: {
     alignItems: 'center',
