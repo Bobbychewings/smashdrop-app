@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, FlatList, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, FlatList, Alert , Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -391,8 +391,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   headerLogo: {
-    width: 140,
-    height: 40,
+    width: Platform.OS === 'web' ? 200 : 140,
+    height: Platform.OS === 'web' ? 57 : 40,
   },
   toggleContainer: {
     flexDirection: 'row',

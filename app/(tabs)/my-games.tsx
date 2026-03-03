@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image , Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { auth, db } from '@/config/firebase';
@@ -127,7 +127,7 @@ export default function MyGamesScreen() {
     return (
       <SafeAreaView style={[styles.centerContainer, { backgroundColor: '#F2F2F7' }]}>
         <Text style={styles.emptyText}>Please log in to view your games.</Text>
-        <TouchableOpacity style={styles.primaryButton} onPress={() => router.push('/login')}>
+        <TouchableOpacity style={styles.primaryButton} onPress={() => router.push({ pathname: '/login', params: { redirect: '/(tabs)/my-games' } })}>
           <Text style={styles.primaryButtonText}>Log In</Text>
         </TouchableOpacity>
       </SafeAreaView>
@@ -218,8 +218,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   headerLogo: {
-    width: 140,
-    height: 40,
+    width: Platform.OS === 'web' ? 200 : 140,
+    height: Platform.OS === 'web' ? 57 : 40,
   },
   toggleContainer: {
     flexDirection: 'row',

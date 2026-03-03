@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F2F7', padding: 16 },
   loadingText: { textAlign: 'center', marginTop: 50, fontSize: 16, color: '#666' },
   headerLogoContainer: { marginBottom: 20, marginTop: 40 },
-  headerLogo: { width: 140, height: 40 },
+  headerLogo: { width: Platform.OS === 'web' ? 200 : 140, height: Platform.OS === 'web' ? 57 : 40 },
   
   sectionCard: { backgroundColor: '#fff', borderRadius: 16, padding: 20, marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 3 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },

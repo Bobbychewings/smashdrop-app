@@ -8,7 +8,7 @@ import { Link, useRouter } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, onSnapshot, orderBy, query, doc, getDoc } from 'firebase/firestore';
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Image } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Image , Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // --- FILTER DATA ---
@@ -80,6 +80,23 @@ export default function ExploreScreen() {
   // --- THE MASTER FILTER ENGINE (LOCAL STATE) ---
   const filteredGames = games.filter(game => {
     if (game.isPrivate) return false;
+
+    // Exclude games that have already started
+    if (game.gameTimestamp) {
+      let gameDate: Date;
+      if (typeof game.gameTimestamp.toDate === 'function') {
+        gameDate = game.gameTimestamp.toDate();
+      } else if (game.gameTimestamp.seconds) {
+        gameDate = new Date(game.gameTimestamp.seconds * 1000);
+      } else {
+        gameDate = new Date(game.gameTimestamp);
+      }
+
+      const now = new Date();
+      if (now > gameDate) {
+        return false;
+      }
+    }
     
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch = !searchQuery || (
@@ -220,7 +237,7 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F2F7' },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10, backgroundColor: '#FFFFFF' },
-  headerLogo: { width: 140, height: 40 },
+  headerLogo: { width: Platform.OS === 'web' ? 200 : 140, height: Platform.OS === 'web' ? 57 : 40 },
   actionRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
   profilePictureMini: { width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: '#E5E5EA' },
   settingsButton: { flexDirection: 'row', alignItems: 'center', padding: 4 },
