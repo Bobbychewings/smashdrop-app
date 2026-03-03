@@ -12,7 +12,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
       }}>
-      <Tabs.Screen name="index" options={{ href: '/explore' }} />
+      <Tabs.Screen name="index" options={{ href: null }} />
       <Tabs.Screen
         name="explore"
         options={{
