@@ -64,7 +64,7 @@ export default function GameCard({ id, location, courts, dateString, startTimeSt
         <View style={styles.metricsGrid}>
           <View style={styles.metricItemWide}>
             <Text style={styles.metricLabel}>SKILL</Text>
-            <Text style={styles.metricValue} numberOfLines={1}>{getSkillLevelDisplay(level)}</Text>
+            <Text style={styles.metricValue}>{getSkillLevelDisplay(level)}</Text>
           </View>
           
           {/* THE HIDDEN FEE METRIC */}
