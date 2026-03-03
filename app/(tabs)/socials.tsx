@@ -139,7 +139,7 @@ export default function SocialsScreen() {
     return (
       <SafeAreaView style={[styles.centerContainer, { backgroundColor: '#F2F2F7' }]}>
         <Text style={styles.emptyText}>Please log in to see your profile.</Text>
-        <TouchableOpacity style={styles.primaryButton} onPress={() => router.push('/login')}>
+        <TouchableOpacity style={styles.primaryButton} onPress={() => router.push({ pathname: '/login', params: { redirect: '/(tabs)/socials' } })}>
           <Text style={styles.primaryButtonText}>Log In</Text>
         </TouchableOpacity>
       </SafeAreaView>
