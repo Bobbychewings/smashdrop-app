@@ -2,7 +2,7 @@ import GameCard from '@/components/GameCard';
 import PremiumBanner from '@/components/PremiumBanner';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { auth, db } from '@/config/firebase';
-import { SKILL_LEVELS } from '@/constants/game';
+import { SKILL_LEVELS, SKILL_LEVELS_DISPLAY } from '@/constants/game';
 import { SG_COURTS } from '@/utils/locations';
 import { Link, useRouter } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -115,15 +115,16 @@ export default function ExploreScreen() {
     setState(newState);
   };
 
-  const FilterChipRow = ({ label, items, selected, onSelect, multiSelect = false }) => (
+  const FilterChipRow = ({ label, items, selected, onSelect, multiSelect = false, isSkill = false }) => (
     <View style={styles.filterRow}>
       <Text style={styles.label}>{label}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
         {items.map(item => {
           const isSelected = multiSelect ? selected.includes(item) : selected === item;
+          const displayText = isSkill ? SKILL_LEVELS_DISPLAY[item] || item : item;
           return (
             <TouchableOpacity key={item} style={[styles.chip, isSelected && styles.chipSelected]} onPress={() => onSelect(item)}>
-              <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>{item}</Text>
+              <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>{displayText}</Text>
             </TouchableOpacity>
           )
         })}
@@ -156,7 +157,7 @@ export default function ExploreScreen() {
         
         {showFilters && (
           <View style={styles.filtersContainer}>
-            <FilterChipRow label="Skill" items={SKILL_LEVELS} selected={filterSkill} onSelect={(val) => toggleChip(val, filterSkill, setFilterSkill)} />
+            <FilterChipRow label="Skill" items={SKILL_LEVELS} selected={filterSkill} onSelect={(val) => toggleChip(val, filterSkill, setFilterSkill)} isSkill />
             <FilterChipRow label="Type" items={GAME_TYPES} selected={filterGameType} onSelect={(val) => toggleChip(val, filterGameType, setFilterGameType)} />
             <FilterChipRow label="Region" items={REGIONS} selected={filterRegion} onSelect={(val) => { toggleChip(val, filterRegion, setFilterRegion); setFilterAreas([]); }} />
             
