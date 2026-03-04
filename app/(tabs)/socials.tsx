@@ -391,8 +391,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   headerLogo: {
-    width: 180,
-    height: 50,
+    width: 220,
+    height: 60,
   },
   toggleContainer: {
     flexDirection: 'row',

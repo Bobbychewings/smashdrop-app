@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F2F7', padding: 16 },
   header: { marginTop: 30, marginBottom: 20 },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  headerLogo: { width: 180, height: 50 },
+  headerLogo: { width: 220, height: 60 },
   shareButton: { padding: 8, backgroundColor: '#E5E5EA', borderRadius: 20 },
   hostText: { fontFamily: 'Rajdhani_600SemiBold', fontSize: 16, color: '#666666' },
   detailsCard: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20, marginBottom: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
