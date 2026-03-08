@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { auth, db } from '@/config/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
-import { collection, query, where, onSnapshot, orderBy, getDocs } from 'firebase/firestore';
 import GameCard from '@/components/GameCard';
+import HorizontalLogo from '@/components/HorizontalLogo';
+import { auth, db } from '@/config/firebase';
+import { useRouter } from 'expo-router';
+import { onAuthStateChanged } from 'firebase/auth';
+import { collection, onSnapshot, orderBy, query, where } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type TabType = 'upcoming' | 'past';
 
@@ -71,19 +72,19 @@ export default function MyGamesScreen() {
           if (game.gameTimestamp) {
             let gameDate: Date;
             if (typeof game.gameTimestamp.toDate === 'function') {
-                gameDate = game.gameTimestamp.toDate();
+              gameDate = game.gameTimestamp.toDate();
             } else if (game.gameTimestamp.seconds) {
-                gameDate = new Date(game.gameTimestamp.seconds * 1000);
+              gameDate = new Date(game.gameTimestamp.seconds * 1000);
             } else {
-                gameDate = new Date(game.gameTimestamp);
+              gameDate = new Date(game.gameTimestamp);
             }
 
-             // Simple check based on timestamp (start time). To be precise about end time,
-             // we'd parse endTimeString, but assuming standard 2-hour game
-             const gameEndTime = new Date(gameDate.getTime() + 2 * 60 * 60 * 1000);
-             if (now > gameEndTime) {
-               isPast = true;
-             }
+            // Simple check based on timestamp (start time). To be precise about end time,
+            // we'd parse endTimeString, but assuming standard 2-hour game
+            const gameEndTime = new Date(gameDate.getTime() + 2 * 60 * 60 * 1000);
+            if (now > gameEndTime) {
+              isPast = true;
+            }
           }
 
           if (isPast) {
@@ -166,11 +167,7 @@ export default function MyGamesScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <View style={styles.headerLogoContainer}>
-          <Image
-            source={require('../../assets/images/horizontal-icon.png')}
-            style={styles.headerLogo}
-            resizeMode="contain"
-          />
+          <HorizontalLogo width={135} height={76} />
         </View>
         <View style={styles.toggleContainer}>
           <TouchableOpacity
@@ -216,10 +213,6 @@ const styles = StyleSheet.create({
   },
   headerLogoContainer: {
     marginBottom: 12,
-  },
-  headerLogo: {
-    width: 220,
-    height: 60,
   },
   toggleContainer: {
     flexDirection: 'row',

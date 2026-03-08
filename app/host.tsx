@@ -1,12 +1,13 @@
-import { SKILL_LEVELS } from '@/constants/game';
+import HorizontalLogo from '@/components/HorizontalLogo';
 import { auth, db } from '@/config/firebase';
+import { SKILL_LEVELS } from '@/constants/game';
 import { SG_COURTS } from '@/utils/locations';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router'; // Stack and useLocalSearchParams imported!
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { Platform, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View, Alert, Image } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 // THE MASTER SWITCH: Change to true when you are ready to monetize!
 const ENABLE_CREDITS = false;
@@ -20,7 +21,7 @@ const WEB_TIME_SLOTS = Array.from({ length: 24 }).map((_, i) => {
 
 // Gets the next available whole hour
 const getRoundedDate = () => {
-  const d = new Date(); 
+  const d = new Date();
   d.setHours(d.getHours() + 1); // Default to at least 1 hour from now
   d.setMinutes(0); d.setSeconds(0); d.setMilliseconds(0);
   return d;
@@ -35,7 +36,7 @@ export default function HostScreen() {
   const [selectedCourtData, setSelectedCourtData] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isCustomLocation, setIsCustomLocation] = useState(false);
-  
+
   const [courtInput, setCourtInput] = useState('');
   const [courts, setCourts] = useState([]);
 
@@ -45,7 +46,7 @@ export default function HostScreen() {
   // Time & Date State
   const [date, setDate] = useState(getRoundedDate());
   const [endDate, setEndDate] = useState(new Date(getRoundedDate().getTime() + 2 * 60 * 60 * 1000));
-  
+
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
@@ -55,7 +56,7 @@ export default function HostScreen() {
   const [slots, setSlots] = useState('');
   const [price, setPrice] = useState('');
   const [isHostPlaying, setIsHostPlaying] = useState(true);
-  const [hostReservedSlots, setHostReservedSlots] = useState('1'); 
+  const [hostReservedSlots, setHostReservedSlots] = useState('1');
 
   // --- NEW: AUTH & FORM RESTORATION ---
   useEffect(() => {
@@ -69,7 +70,7 @@ export default function HostScreen() {
     if (params.formState) {
       try {
         const restoredState = JSON.parse(params.formState);
-        
+
         // Restore all state, making sure to handle dates correctly
         setLocationQuery(restoredState.locationQuery || '');
         setSelectedCourtData(restoredState.selectedCourtData || null);
@@ -85,7 +86,7 @@ export default function HostScreen() {
         setPrice(restoredState.price || '');
         setIsHostPlaying(restoredState.isHostPlaying !== false);
         setHostReservedSlots(restoredState.hostReservedSlots || '1');
-        
+
         Alert.alert("Welcome back!", "Your game details have been restored.");
 
       } catch (e) {
@@ -128,7 +129,7 @@ export default function HostScreen() {
 
   // --- TIME-TRAVEL BLOCKER LOGIC ---
   const today = new Date();
-  today.setHours(0,0,0,0);
+  today.setHours(0, 0, 0, 0);
 
   // When start date/time changes, automatically push the end time 2 hours ahead to prevent logical errors
   const handleStartDateChange = (newDate) => {
@@ -140,7 +141,7 @@ export default function HostScreen() {
   // Web dropdown limiters
   const isToday = date.toDateString() === new Date().toDateString();
   const currentHour = new Date().getHours();
-  
+
   const validStartTimes = WEB_TIME_SLOTS.filter(slot => {
     if (isToday) return slot.hour24 > currentHour; // Block past hours today
     return true; // Future days allow any time
@@ -161,12 +162,12 @@ export default function HostScreen() {
         gameType, date: date.toISOString(), endDate: endDate.toISOString(), minLevel, maxLevel, slots, price,
         isHostPlaying, hostReservedSlots
       };
-      
+
       router.push({
         pathname: '/login',
-        params: { 
-          redirect: '/host', 
-          formState: JSON.stringify(formState) 
+        params: {
+          redirect: '/host',
+          formState: JSON.stringify(formState)
         }
       });
       return;
@@ -176,42 +177,42 @@ export default function HostScreen() {
     if (!locationQuery || courts.length === 0 || !minLevel || !maxLevel || !slots || (ENABLE_CREDITS && !price)) {
       alert("Please fill in all details, including at least one court number!"); return;
     }
-    
+
     const shortRoomId = Math.random().toString(36).substring(2, 8).toUpperCase();
     let initialRoster = [];
     const reservedCount = isHostPlaying ? (parseInt(hostReservedSlots) || 1) : 0;
-    
+
     for (let i = 0; i < reservedCount; i++) {
-      initialRoster.push({ 
-        uid: i === 0 ? currentUser.uid : `guest-${Date.now()}-${i}`, 
-        username: i === 0 ? (currentUser.displayName || "Host") : "Host's Guest", 
-        checkedIn: true 
+      initialRoster.push({
+        uid: i === 0 ? currentUser.uid : `guest-${Date.now()}-${i}`,
+        username: i === 0 ? (currentUser.displayName || "Host") : "Host's Guest",
+        checkedIn: true
       });
     }
 
     try {
       const newGameRef = doc(db, 'games', shortRoomId);
       await setDoc(newGameRef, {
-        location: locationQuery, 
-        courts: courts, 
+        location: locationQuery,
+        courts: courts,
         area: isCustomLocation ? 'Unknown' : (selectedCourtData?.area || 'Unknown'),
         region: isCustomLocation ? 'Unknown' : (selectedCourtData?.region || 'Unknown'),
         isPrivate: isPrivate,
         gameType: gameType,
-        dateString: formatDateOnly(date), 
-        startTimeString: formatTimeOnly(date), 
-        endTimeString: formatTimeOnly(endDate), 
+        dateString: formatDateOnly(date),
+        startTimeString: formatTimeOnly(date),
+        endTimeString: formatTimeOnly(endDate),
         gameTimestamp: date, // Keep full date object, Firestore will convert Date to Timestamp via setDoc
-        level: minLevel === maxLevel ? minLevel : `${minLevel} - ${maxLevel}`, 
+        level: minLevel === maxLevel ? minLevel : `${minLevel} - ${maxLevel}`,
         slots: slots,
-        price: ENABLE_CREDITS ? price : '0', 
-        host: currentUser.displayName || "Player", 
+        price: ENABLE_CREDITS ? price : '0',
+        host: currentUser.displayName || "Player",
         hostId: currentUser.uid,
-        playersJoined: initialRoster, 
+        playersJoined: initialRoster,
         checkInPin: Math.floor(1000 + Math.random() * 9000).toString(),
         createdAt: new Date()
       });
-      router.back(); 
+      router.back();
     } catch (error) {
       console.error("Game creation error: ", error)
       alert("Error creating game.");
@@ -224,23 +225,19 @@ export default function HostScreen() {
 
   return (
     <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
-      
+
       {/* FORCE THE BACK BUTTON TO SAY 'BACK' */}
       <Stack.Screen options={{ headerTitle: 'Create a Game', headerBackTitle: 'Back' }} />
 
       <View style={styles.header}>
         <View style={styles.headerLogoContainer}>
-          <Image
-            source={require('../assets/images/horizontal-icon.png')}
-            style={styles.headerLogo}
-            resizeMode="contain"
-          />
+          <HorizontalLogo width={135} height={76} />
         </View>
         <Text style={styles.subtitle}>Set your court details to invite players.</Text>
       </View>
 
       <View style={styles.formCard}>
-        
+
         <View style={styles.switchRow}>
           <Text style={styles.label}>Private Game (Invite Only)</Text>
           <Switch value={isPrivate} onValueChange={setIsPrivate} trackColor={{ false: '#E5E5EA', true: '#FF3B30' }} />
@@ -272,7 +269,7 @@ export default function HostScreen() {
               <Text style={styles.checkboxLabel}>Not in list</Text>
             </View>
           </View>
-          <TextInput style={styles.input} placeholder={isCustomLocation ? "Type custom location name" : "Search venues (e.g., OCBC Arena)"} placeholderTextColor="#8E8E93" value={locationQuery} onChangeText={(text) => { setLocationQuery(text); setShowSuggestions(text.length > 0 && !isCustomLocation); }} onFocus={() => { if(!isCustomLocation && locationQuery.length > 0) setShowSuggestions(true); }} />
+          <TextInput style={styles.input} placeholder={isCustomLocation ? "Type custom location name" : "Search venues (e.g., OCBC Arena)"} placeholderTextColor="#8E8E93" value={locationQuery} onChangeText={(text) => { setLocationQuery(text); setShowSuggestions(text.length > 0 && !isCustomLocation); }} onFocus={() => { if (!isCustomLocation && locationQuery.length > 0) setShowSuggestions(true); }} />
           {showSuggestions && !isCustomLocation && (
             <ScrollView style={styles.dropdown} nestedScrollEnabled={true} keyboardShouldPersistTaps="handled">
               {filteredCourts.slice(0, 10).map((court, idx) => (
@@ -305,13 +302,13 @@ export default function HostScreen() {
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Date of Game</Text>
           {Platform.OS === 'web' ? (
-             <input type="date" min={today.toISOString().split('T')[0]} value={new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().split('T')[0]} onChange={(e) => { if (e.target.value) { const newDate = new Date(e.target.value); newDate.setHours(date.getHours(), date.getMinutes()); handleStartDateChange(newDate); } }} style={styles.webInput} />
+            <input type="date" min={today.toISOString().split('T')[0]} value={new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().split('T')[0]} onChange={(e) => { if (e.target.value) { const newDate = new Date(e.target.value); newDate.setHours(date.getHours(), date.getMinutes()); handleStartDateChange(newDate); } }} style={styles.webInput} />
           ) : (
             <>
               <TouchableOpacity style={styles.input} onPress={() => setShowDatePicker(!showDatePicker)}>
                 <Text style={styles.inputText}>{formatDateOnly(date)}</Text>
               </TouchableOpacity>
-              {showDatePicker && <DateTimePicker value={date} mode="date" display="default" minimumDate={today} onChange={(e, d) => { if(d) handleStartDateChange(d); if(Platform.OS === 'android') setShowDatePicker(false); }} />}
+              {showDatePicker && <DateTimePicker value={date} mode="date" display="default" minimumDate={today} onChange={(e, d) => { if (d) handleStartDateChange(d); if (Platform.OS === 'android') setShowDatePicker(false); }} />}
             </>
           )}
         </View>
@@ -325,13 +322,13 @@ export default function HostScreen() {
                 {validStartTimes.map((slot) => (<option key={slot.value} value={slot.value}>{slot.label}</option>))}
               </select>
             ) : (
-               <TouchableOpacity style={styles.input} onPress={() => setShowStartPicker(!showStartPicker)}>
-                 <Text style={styles.inputText}>{formatTimeOnly(date)}</Text>
-               </TouchableOpacity>
+              <TouchableOpacity style={styles.input} onPress={() => setShowStartPicker(!showStartPicker)}>
+                <Text style={styles.inputText}>{formatTimeOnly(date)}</Text>
+              </TouchableOpacity>
             )}
-             {showStartPicker && Platform.OS !== 'web' && <DateTimePicker value={date} mode="time" minuteInterval={60} display="default" minimumDate={isToday ? new Date() : undefined} onChange={(e, d) => { if(d){ d.setMinutes(0); d.setSeconds(0); handleStartDateChange(d); } if(Platform.OS === 'android') setShowStartPicker(false); }} />}
+            {showStartPicker && Platform.OS !== 'web' && <DateTimePicker value={date} mode="time" minuteInterval={60} display="default" minimumDate={isToday ? new Date() : undefined} onChange={(e, d) => { if (d) { d.setMinutes(0); d.setSeconds(0); handleStartDateChange(d); } if (Platform.OS === 'android') setShowStartPicker(false); }} />}
           </View>
-          
+
           <View style={{ flex: 1 }}>
             <Text style={styles.label}>End Time</Text>
             {Platform.OS === 'web' ? (
@@ -339,11 +336,11 @@ export default function HostScreen() {
                 {validEndTimes.map((slot) => (<option key={slot.value} value={slot.value}>{slot.label}</option>))}
               </select>
             ) : (
-               <TouchableOpacity style={styles.input} onPress={() => setShowEndPicker(!showEndPicker)}>
-                 <Text style={styles.inputText}>{formatTimeOnly(endDate)}</Text>
-               </TouchableOpacity>
+              <TouchableOpacity style={styles.input} onPress={() => setShowEndPicker(!showEndPicker)}>
+                <Text style={styles.inputText}>{formatTimeOnly(endDate)}</Text>
+              </TouchableOpacity>
             )}
-            {showEndPicker && Platform.OS !== 'web' && <DateTimePicker value={endDate} mode="time" minuteInterval={60} display="default" minimumDate={new Date(date.getTime() + 60*60*1000)} onChange={(e, d) => { if(d){ d.setMinutes(0); d.setSeconds(0); setEndDate(d); } if(Platform.OS === 'android') setShowEndPicker(false); }} />}
+            {showEndPicker && Platform.OS !== 'web' && <DateTimePicker value={endDate} mode="time" minuteInterval={60} display="default" minimumDate={new Date(date.getTime() + 60 * 60 * 1000)} onChange={(e, d) => { if (d) { d.setMinutes(0); d.setSeconds(0); setEndDate(d); } if (Platform.OS === 'android') setShowEndPicker(false); }} />}
           </View>
         </View>
 
@@ -361,8 +358,8 @@ export default function HostScreen() {
           {SKILL_LEVELS.map((skill, index) => {
             const isTooLow = minLevel ? index < SKILL_LEVELS.indexOf(minLevel) : false;
             return (
-              <TouchableOpacity key={`max-${skill}`} disabled={isTooLow} style={[ styles.chip, maxLevel === skill && styles.chipSelected, isTooLow && { opacity: 0.4, backgroundColor: '#F2F2F7', borderColor: '#E5E5EA' } ]} onPress={() => setMaxLevel(skill)}>
-                <Text style={[ styles.chipText, maxLevel === skill && styles.chipTextSelected, isTooLow && { color: '#C7C7CC' } ]}>{skill}</Text>
+              <TouchableOpacity key={`max-${skill}`} disabled={isTooLow} style={[styles.chip, maxLevel === skill && styles.chipSelected, isTooLow && { opacity: 0.4, backgroundColor: '#F2F2F7', borderColor: '#E5E5EA' }]} onPress={() => setMaxLevel(skill)}>
+                <Text style={[styles.chipText, maxLevel === skill && styles.chipTextSelected, isTooLow && { color: '#C7C7CC' }]}>{skill}</Text>
               </TouchableOpacity>
             );
           })}
@@ -388,7 +385,7 @@ export default function HostScreen() {
             </Text>
           </View>
         ) : null}
-        
+
         <TouchableOpacity style={styles.publishButton} onPress={handleCreateGame}>
           <Text style={styles.publishButtonText}>Create Game</Text>
         </TouchableOpacity>
@@ -398,24 +395,23 @@ export default function HostScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F2F2F7', padding: 16 }, 
+  container: { flex: 1, backgroundColor: '#F2F2F7', padding: 16 },
   header: { marginTop: 10, marginBottom: 20 },
   headerLogoContainer: { marginBottom: 12 },
-  headerLogo: { width: 220, height: 60 },
   subtitle: { fontFamily: 'Rajdhani_600SemiBold', fontSize: 16, color: '#8E8E93' },
-  formCard: { backgroundColor: '#FFFFFF', padding: 20, borderRadius: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3, marginBottom: 40 }, 
+  formCard: { backgroundColor: '#FFFFFF', padding: 20, borderRadius: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3, marginBottom: 40 },
   inputGroup: { marginBottom: 20 },
   row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
   switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  
+
   label: { fontFamily: 'Rajdhani_700Bold', fontSize: 14, color: '#666666', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
   input: { backgroundColor: '#F9F9F9', borderWidth: 1, borderColor: '#E5E5EA', color: '#1C1C1E', padding: 14, borderRadius: 10, fontFamily: 'Rajdhani_600SemiBold', fontSize: 16 },
   inputText: { color: '#1C1C1E', fontFamily: 'Rajdhani_600SemiBold', fontSize: 16 },
   webInput: { flex: 1, padding: '14px', border: '1px solid #E5E5EA', borderRadius: '10px', backgroundColor: '#F9F9F9', color: '#1C1C1E', fontFamily: 'Rajdhani_600SemiBold', fontSize: '16px', outlineStyle: 'none', cursor: 'pointer' },
-  
+
   typeContainer: { flexDirection: 'row', gap: 10, marginBottom: 20 },
   typeBtn: { flex: 1, paddingVertical: 12, borderRadius: 10, borderWidth: 1, borderColor: '#E5E5EA', alignItems: 'center', backgroundColor: '#F9F9F9' },
-  typeBtnSelected: { backgroundColor: '#FF3B30', borderColor: '#FF3B30' },
+  typeBtnSelected: { backgroundColor: '#ED2939', borderColor: '#ED2939' },
   typeBtnText: { fontFamily: 'Rajdhani_700Bold', color: '#666666' },
   typeBtnTextSelected: { color: '#FFFFFF' },
 
@@ -429,7 +425,7 @@ const styles = StyleSheet.create({
   dropdownSubtext: { fontSize: 13, color: '#8E8E93', fontFamily: 'Rajdhani_600SemiBold', marginTop: 4 },
 
   addCourtRow: { flexDirection: 'row', gap: 10 },
-  addButton: { backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20, borderRadius: 10 },
+  addButton: { backgroundColor: '#ED2939', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20, borderRadius: 10 },
   addButtonText: { color: '#FFFFFF', fontSize: 24, fontWeight: 'bold' },
   courtsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
   courtTag: { backgroundColor: '#F2F2F7', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, borderWidth: 1, borderColor: '#E5E5EA' },
@@ -437,13 +433,13 @@ const styles = StyleSheet.create({
 
   chipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
   chip: { backgroundColor: '#F9F9F9', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20, borderWidth: 1, borderColor: '#E5E5EA' },
-  chipSelected: { backgroundColor: '#FF3B30', borderColor: '#FF3B30' },
+  chipSelected: { backgroundColor: '#ED2939', borderColor: '#ED2939' },
   chipText: { color: '#666666', fontFamily: 'Rajdhani_700Bold', fontSize: 14 },
   chipTextSelected: { color: '#FFFFFF' },
 
-  summaryBox: { backgroundColor: '#FFF0F0', padding: 14, borderRadius: 10, marginBottom: 20, borderWidth: 1, borderColor: '#FF3B30' },
-  summaryText: { color: '#FF3B30', fontFamily: 'Rajdhani_700Bold', textAlign: 'center', fontSize: 15 },
-  
-  publishButton: { backgroundColor: '#FF3B30', paddingVertical: 18, alignItems: 'center', borderRadius: 12, marginTop: 10 }, 
+  summaryBox: { backgroundColor: '#FFF0F0', padding: 14, borderRadius: 10, marginBottom: 20, borderWidth: 1, borderColor: '#ED2939' },
+  summaryText: { color: '#ED2939', fontFamily: 'Rajdhani_700Bold', textAlign: 'center', fontSize: 15 },
+
+  publishButton: { backgroundColor: '#ED2939', paddingVertical: 18, alignItems: 'center', borderRadius: 50, marginTop: 10 },
   publishButtonText: { color: '#FFFFFF', fontFamily: 'Rajdhani_700Bold', fontSize: 18, letterSpacing: 1 }
 });

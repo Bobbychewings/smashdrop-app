@@ -1,7 +1,7 @@
-import { Tabs } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Tabs } from 'expo-router';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -11,6 +11,10 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
+        tabBarStyle: {
+          height: 70,
+          paddingBottom: 12,
+        },
       }}>
       <Tabs.Screen name="index" options={{ href: null }} />
       <Tabs.Screen
