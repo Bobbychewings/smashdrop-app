@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, FlatList, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { Colors } from '@/constants/theme';
+import HorizontalLogo from '@/components/HorizontalLogo';
 import { auth, db } from '@/config/firebase';
-import { doc, getDoc, collection, getDocs, query, limit, where } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
-import { Ionicons } from '@expo/vector-icons';
 import { getSkillLevelDisplay } from '@/constants/game';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { onAuthStateChanged } from 'firebase/auth';
+import { collection, doc, getDoc, getDocs, limit, query } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, FlatList, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type ActiveTab = 'profile' | 'find';
 type ProfileSubTab = 'friends' | 'recent';
@@ -328,9 +329,9 @@ export default function SocialsScreen() {
           )}
           ListEmptyComponent={
             searchQuery.trim() === '' ? (
-               <Text style={styles.emptyText}>Search for players by name or username.</Text>
+              <Text style={styles.emptyText}>Search for players by name or username.</Text>
             ) : (
-               <Text style={styles.emptyText}>No players found.</Text>
+              <Text style={styles.emptyText}>No players found.</Text>
             )
           }
         />
@@ -343,11 +344,7 @@ export default function SocialsScreen() {
       {/* Top Toggle */}
       <View style={styles.header}>
         <View style={styles.headerLogoContainer}>
-          <Image
-            source={require('../../assets/images/horizontal-icon.png')}
-            style={styles.headerLogo}
-            resizeMode="contain"
-          />
+          <HorizontalLogo width={135} height={76} />
         </View>
         <View style={styles.toggleContainer}>
           <TouchableOpacity
@@ -389,10 +386,6 @@ const styles = StyleSheet.create({
   },
   headerLogoContainer: {
     marginBottom: 12,
-  },
-  headerLogo: {
-    width: 220,
-    height: 60,
   },
   toggleContainer: {
     flexDirection: 'row',
