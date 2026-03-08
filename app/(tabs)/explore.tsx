@@ -1,4 +1,5 @@
 ﻿import GameCard from '@/components/GameCard';
+import HorizontalLogo from '@/components/HorizontalLogo';
 import PremiumBanner from '@/components/PremiumBanner';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { auth, db } from '@/config/firebase';
@@ -67,29 +68,29 @@ export default function ExploreScreen() {
   // --- THE MASTER FILTER ENGINE (LOCAL STATE) ---
   const filteredGames = games.filter(game => {
     if (game.isPrivate) return false;
-    
+
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch = !searchQuery || (
-      game.location?.toLowerCase().includes(searchLower) || 
+      game.location?.toLowerCase().includes(searchLower) ||
       game.area?.toLowerCase().includes(searchLower) ||
       game.host?.toLowerCase().includes(searchLower) ||
       game.id.toLowerCase().includes(searchLower)
     );
-    
+
     const matchesGameType = !filterGameType || game.gameType === filterGameType;
-    
+
     const matchesSkillLevel = !filterSkill || (() => {
       if (!game.level) return false;
       if (game.level.includes(' - ')) {
-          const [min, max] = game.level.split(' - ');
-          const minIndex = SKILL_LEVELS.indexOf(min);
-          const maxIndex = SKILL_LEVELS.indexOf(max);
-          const skillIndex = SKILL_LEVELS.indexOf(filterSkill);
-          // If any of the skills aren't in our list, we can't compare, so we fail gracefully
-          if (minIndex === -1 || maxIndex === -1 || skillIndex === -1) return false;
-          return skillIndex >= minIndex && skillIndex <= maxIndex;
+        const [min, max] = game.level.split(' - ');
+        const minIndex = SKILL_LEVELS.indexOf(min);
+        const maxIndex = SKILL_LEVELS.indexOf(max);
+        const skillIndex = SKILL_LEVELS.indexOf(filterSkill);
+        // If any of the skills aren't in our list, we can't compare, so we fail gracefully
+        if (minIndex === -1 || maxIndex === -1 || skillIndex === -1) return false;
+        return skillIndex >= minIndex && skillIndex <= maxIndex;
       } else {
-          return game.level === filterSkill;
+        return game.level === filterSkill;
       }
     })();
 
@@ -97,11 +98,11 @@ export default function ExploreScreen() {
     const matchesDate = !filterDate || game.dateString === filterDate;
     const matchesArea = filterAreas.length === 0 || filterAreas.includes(game.area);
     const matchesTimeSlot = filterTimeSlots.length === 0 || filterTimeSlots.some(slot => {
-        const gameHour = new Date(game.gameTimestamp.seconds * 1000).getHours();
-        if (slot === 'Morning') return gameHour >= 6 && gameHour < 12;
-        if (slot === 'Afternoon') return gameHour >= 12 && gameHour < 18;
-        if (slot === 'Evening') return gameHour >= 18 && gameHour < 24;
-        return false;
+      const gameHour = new Date(game.gameTimestamp.seconds * 1000).getHours();
+      if (slot === 'Morning') return gameHour >= 6 && gameHour < 12;
+      if (slot === 'Afternoon') return gameHour >= 12 && gameHour < 18;
+      if (slot === 'Evening') return gameHour >= 18 && gameHour < 24;
+      return false;
     });
 
     return matchesSearch && matchesGameType && matchesSkillLevel && matchesRegion && matchesDate && matchesArea && matchesTimeSlot;
@@ -154,13 +155,13 @@ export default function ExploreScreen() {
             {activeFilterCount > 0 && <View style={styles.filterBadge}><Text style={styles.filterBadgeText}>{activeFilterCount}</Text></View>}
           </TouchableOpacity>
         </View>
-        
+
         {showFilters && (
           <View style={styles.filtersContainer}>
             <FilterChipRow label="Skill" items={SKILL_LEVELS} selected={filterSkill} onSelect={(val) => toggleChip(val, filterSkill, setFilterSkill)} isSkill />
             <FilterChipRow label="Type" items={GAME_TYPES} selected={filterGameType} onSelect={(val) => toggleChip(val, filterGameType, setFilterGameType)} />
             <FilterChipRow label="Region" items={REGIONS} selected={filterRegion} onSelect={(val) => { toggleChip(val, filterRegion, setFilterRegion); setFilterAreas([]); }} />
-            
+
             {filterRegion && availableAreas.length > 0 && (
               <FilterChipRow label="Area" items={availableAreas} selected={filterAreas} onSelect={(val) => toggleMultiChip(val, filterAreas, setFilterAreas)} multiSelect />
             )}
@@ -171,7 +172,7 @@ export default function ExploreScreen() {
           </View>
         )}
       </View>
-      
+
       <ScrollView style={styles.feed} showsVerticalScrollIndicator={false}>
         <PremiumBanner />
         {filteredGames.length === 0 ? (
@@ -192,7 +193,7 @@ const styles = StyleSheet.create({
   settingsButton: { padding: 4 },
   loginLink: { backgroundColor: '#E5E5EA', color: '#333', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, fontFamily: 'Rajdhani_600SemiBold', overflow: 'hidden' },
   hostLink: { backgroundColor: '#FF3B30', color: '#fff', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, fontFamily: 'Rajdhani_700Bold', overflow: 'hidden' },
-  
+
   filterHub: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#E5E5EA', backgroundColor: '#FFFFFF' },
   searchRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, minWidth: 0 },
   searchInput: { flex: 1, backgroundColor: '#F2F2F7', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 16, fontSize: 16, color: '#1C1C1E', fontFamily: 'Rajdhani_500Medium' },
@@ -202,42 +203,42 @@ const styles = StyleSheet.create({
   filterBadgeText: { color: '#FFFFFF', fontFamily: 'Rajdhani_700Bold', fontSize: 12 },
 
   filtersContainer: { paddingTop: 8 },
-  filterRow: { 
+  filterRow: {
     marginBottom: 8,
   },
-  label: { 
-    fontFamily: 'Rajdhani_600SemiBold', 
-    fontSize: 14, 
-    color: '#8E8E93', 
+  label: {
+    fontFamily: 'Rajdhani_600SemiBold',
+    fontSize: 14,
+    color: '#8E8E93',
     marginBottom: 8,
     paddingHorizontal: 16,
   },
-  chipContainer: { 
-    flexDirection: 'row', 
-    gap: 8, 
+  chipContainer: {
+    flexDirection: 'row',
+    gap: 8,
   },
-  chip: { 
-    backgroundColor: '#FFFFFF', 
-    paddingHorizontal: 14, 
-    paddingVertical: 8, 
-    borderRadius: 20, 
-    borderWidth: 1, 
+  chip: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
     borderColor: '#E5E5EA',
     marginRight: 8,
   },
   chipSelected: { backgroundColor: '#1C1C1E', borderColor: '#1C1C1E' },
   chipText: { fontFamily: 'Rajdhani_600SemiBold', fontSize: 13, color: '#3C3C43' },
   chipTextSelected: { color: '#FFFFFF' },
-  
+
   filterActions: {
     flexDirection: 'row',
     justifyContent: 'center',
     paddingTop: 8,
     paddingBottom: 4,
   },
-  clearButton: { 
-    alignItems: 'center', 
-    padding: 12, 
+  clearButton: {
+    alignItems: 'center',
+    padding: 12,
   },
   clearButtonText: { color: '#FF3B30', fontFamily: 'Rajdhani_700Bold' },
 
