@@ -15,15 +15,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 // --- FILTER DATA ---
 const GAME_TYPES = ["Singles", "Doubles", "Mixed"];
 const REGIONS = ["North", "East", "West", "North-East", "Central"];
-const AREAS_BY_REGION = SG_COURTS.reduce((acc, court) => {
+const AREAS_BY_REGION: Record<string, string[]> = SG_COURTS.reduce((acc: Record<string, string[]>, court) => {
   if (!acc[court.region]) acc[court.region] = [];
   if (!acc[court.region].includes(court.area)) acc[court.region].push(court.area);
   return acc;
 }, {});
 
 export default function ExploreScreen() {
-  const [games, setGames] = useState([]);
-  const [user, setUser] = useState(null);
+  const [games, setGames] = useState<any[]>([]);
+  const [user, setUser] = useState<any>(null);
   const router = useRouter();
 
   // --- ALL FILTER STATE NOW LIVES HERE ---
@@ -31,10 +31,10 @@ export default function ExploreScreen() {
   const [showFilters, setShowFilters] = useState(false);
   const [filterDate, setFilterDate] = useState('');
   const [filterSkill, setFilterSkill] = useState('');
-  const [filterGameType, setFilterGameType] = useState('');
-  const [filterTimeSlots, setFilterTimeSlots] = useState([]);
-  const [filterRegion, setFilterRegion] = useState('');
-  const [filterAreas, setFilterAreas] = useState([]);
+  const [filterGameType, setFilterGameType] = useState<string>('');
+  const [filterTimeSlots, setFilterTimeSlots] = useState<string[]>([]);
+  const [filterRegion, setFilterRegion] = useState<string>('');
+  const [filterAreas, setFilterAreas] = useState<string[]>([]);
 
   const availableAreas = useMemo(() => {
     return filterRegion ? AREAS_BY_REGION[filterRegion] || [] : [];
@@ -110,17 +110,17 @@ export default function ExploreScreen() {
 
   const activeFilterCount = [filterDate, filterSkill, filterGameType, filterRegion, ...filterTimeSlots, ...filterAreas].filter(Boolean).length;
 
-  const toggleChip = (value, state, setState) => setState(state === value ? '' : value);
-  const toggleMultiChip = (value, state, setState) => {
-    const newState = state.includes(value) ? state.filter(item => item !== value) : [...state, value];
+  const toggleChip = (value: string, state: string, setState: (val: string) => void) => setState(state === value ? '' : value);
+  const toggleMultiChip = (value: string, state: string[], setState: (val: string[]) => void) => {
+    const newState = state.includes(value) ? state.filter((item: string) => item !== value) : [...state, value];
     setState(newState);
   };
 
-  const FilterChipRow = ({ label, items, selected, onSelect, multiSelect = false, isSkill = false }) => (
+  const FilterChipRow = ({ label, items, selected, onSelect, multiSelect = false, isSkill = false }: any) => (
     <View style={styles.filterRow}>
       <Text style={styles.label}>{label}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
-        {items.map(item => {
+        {items.map((item: string) => {
           const isSelected = multiSelect ? selected.includes(item) : selected === item;
           const displayText = isSkill ? SKILL_LEVELS_DISPLAY[item] || item : item;
           return (
@@ -140,7 +140,7 @@ export default function ExploreScreen() {
         <View style={styles.actionRow}>
           {user ? (
             <TouchableOpacity onPress={() => router.push('/settings')} style={styles.settingsButton}>
-              <IconSymbol name="gear" />
+              <IconSymbol name="gear" color="#1C1C1E" />
             </TouchableOpacity>
           ) : <Link href="/login" style={styles.loginLink}>Login</Link>}
           <Link href="/host" style={styles.hostLink}>+ Host</Link>
@@ -158,12 +158,12 @@ export default function ExploreScreen() {
 
         {showFilters && (
           <View style={styles.filtersContainer}>
-            <FilterChipRow label="Skill" items={SKILL_LEVELS} selected={filterSkill} onSelect={(val) => toggleChip(val, filterSkill, setFilterSkill)} isSkill />
-            <FilterChipRow label="Type" items={GAME_TYPES} selected={filterGameType} onSelect={(val) => toggleChip(val, filterGameType, setFilterGameType)} />
-            <FilterChipRow label="Region" items={REGIONS} selected={filterRegion} onSelect={(val) => { toggleChip(val, filterRegion, setFilterRegion); setFilterAreas([]); }} />
+            <FilterChipRow label="Skill" items={SKILL_LEVELS} selected={filterSkill} onSelect={(val: string) => toggleChip(val, filterSkill, setFilterSkill)} isSkill />
+            <FilterChipRow label="Type" items={GAME_TYPES} selected={filterGameType} onSelect={(val: string) => toggleChip(val, filterGameType, setFilterGameType)} />
+            <FilterChipRow label="Region" items={REGIONS} selected={filterRegion} onSelect={(val: string) => { toggleChip(val, filterRegion, setFilterRegion); setFilterAreas([]); }} />
 
             {filterRegion && availableAreas.length > 0 && (
-              <FilterChipRow label="Area" items={availableAreas} selected={filterAreas} onSelect={(val) => toggleMultiChip(val, filterAreas, setFilterAreas)} multiSelect />
+              <FilterChipRow label="Area" items={availableAreas} selected={filterAreas} onSelect={(val: string) => toggleMultiChip(val, filterAreas, setFilterAreas)} multiSelect />
             )}
 
             <View style={styles.filterActions}>
